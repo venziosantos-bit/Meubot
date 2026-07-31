@@ -2,7 +2,7 @@ import os
 import sqlite3
 from datetime import datetime
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
+from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, CallbackContext
 
 TOKEN = os.environ.get("TOKEN")
 CHAVE_PIX = os.environ.get("CHAVE_PIX")
@@ -38,7 +38,7 @@ def atualizar_saldo(user_id, valor):
     conn.commit()
     conn.close()
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def start(update: Update, context: CallbackContext):
     user_id = update.effective_user.id
     nome = update.effective_user.first_name
     adicionar_usuario(user_id)
@@ -58,12 +58,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("💰 Adicionar saldo", callback_data="pix")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text(mensagem, reply_markup=reply_markup)
+    update.message.reply_text(mensagem, reply_markup=reply_markup)
 
-async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def button_handler(update: Update, context: CallbackContext):
     query = update.callback_query
     user_id = query.from_user.id
-    await query.answer()
+    query.answer()
     
     if query.data == "comprar":
         keyboard = [
@@ -72,7 +72,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [InlineKeyboardButton("Xbox R$ 55", callback_data="xbox")],
             [InlineKeyboardButton("🔙 Voltar", callback_data="voltar")]
         ]
-        await query.edit_message_text("Escolha o gift:", reply_markup=InlineKeyboardMarkup(keyboard))
+        query.edit_message_text("Escolha o gift:", reply_markup=InlineKeyboardMarkup(keyboard))
     
     elif query.data in ["steam", "ps", "xbox"]:
         precos = {"steam": 50, "ps": 60, "xbox": 55}
@@ -81,19 +81,19 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         if saldo >= preco:
             atualizar_saldo(user_id, -preco)
-            await query.edit_message_text(
+            query.edit_message_text(
                 f"✅ Compra de {query.data.upper()} realizada!\n"
                 f"Novo saldo: R$ {get_saldo(user_id):.2f}"
             )
         else:
-            await query.edit_message_text(
+            query.edit_message_text(
                 f"❌ Saldo insuficiente!\n"
                 f"Preço: R$ {preco:.2f} | Seu saldo: R$ {saldo:.2f}"
             )
     
     elif query.data == "conta":
         saldo = get_saldo(user_id)
-        await query.edit_message_text(
+        query.edit_message_text(
             f"🏦 Sua Carteira\n"
             f" ├ ID: {user_id}\n"
             f" ├💰 Saldo: R$ {saldo:.2f}\n"
@@ -101,24 +101,26 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
     
     elif query.data == "pix":
-        await query.edit_message_text(
+        query.edit_message_text(
             f"💰 Adicione saldo via PIX\n\n"
             f"📌 Chave Pix: `{CHAVE_PIX}`\n\n"
             f"⚠️ Após o pagamento, envie o comprovante para @LuckyZEROON com seu ID: `{user_id}`"
         )
     
     elif query.data == "voltar":
-        await start(update, context)
+        start(update, context)
 
 def main():
     init_db()
-    app = Application.builder().token(TOKEN).build()
+    updater = Updater(TOKEN, use_context=True)
+    dp = updater.dispatcher
     
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CallbackQueryHandler(button_handler))
+    dp.add_handler(CommandHandler("start", start))
+    dp.add_handler(CallbackQueryHandler(button_handler))
     
     print("🔥 Bot rodando, arrombado!")
-    app.run_polling()  # Agora usa polling, que é mais simples
+    updater.start_polling()
+    updater.idle()
 
 if __name__ == "__main__":
     main()
