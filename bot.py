@@ -4,8 +4,9 @@ from datetime import datetime
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
-TOKEN = os.environ.get("TOKEN")
-CHAVE_PIX = os.environ.get("CHAVE_PIX")
+# ===== CONFIGURAÇÕES (TOKEN DIRETO) =====
+TOKEN = "8958451748:AAH3auDxSmouvUD928Zwd5n36gKZNfvHHQA"
+CHAVE_PIX = "77991204628"
 
 def init_db():
     conn = sqlite3.connect('usuarios.db')
@@ -121,4 +122,4 @@ def main():
     app.run_polling()
 
 if __name__ == "__main__":
-    main()
+    main()a
