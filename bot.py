@@ -4,7 +4,6 @@ from datetime import datetime
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
-# ===== CONFIGURAÇÕES (TOKEN DIRETO) =====
 TOKEN = "8958451748:AAH3auDxSmouvUD928Zwd5n36gKZNfvHHQA"
 CHAVE_PIX = "77991204628"
 
@@ -114,12 +113,10 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 def main():
     init_db()
     app = Application.builder().token(TOKEN).build()
-    
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CallbackQueryHandler(button_handler))
-    
     print("🔥 Bot rodando, arrombado!")
     app.run_polling()
 
 if __name__ == "__main__":
-    main()a
+    main()
